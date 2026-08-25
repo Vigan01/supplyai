@@ -1,0 +1,41 @@
+name: Bug report
+description: Report a reproducible problem in SupplyAI.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: textarea
+    id: current-behavior
+    attributes:
+      label: Current behavior
+      description: What happened?
+    validations:
+      required: true
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected behavior
+      description: What did you expect to happen?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Include commands, requests, sample data, and relevant logs.
+      placeholder: |
+        1. Run ...
+        2. Open ...
+        3. See ...
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      description: Release version or Git commit SHA.
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Java version, OS, database profile, and anything else relevant.

@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SupplyAI Cockpit</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<aside class="sidebar">
+    <div class="brand">
+        <span class="brand-mark">SA</span>
+        <div>
+            <strong>SupplyAI</strong>
+            <span>Desktop Cockpit</span>
+        </div>
+    </div>
+    <label class="view-select-label">Ansicht
+        <select id="viewSelect">
+            <option value="dashboard">Dashboard</option>
+            <option value="products">Produkte</option>
+            <option value="suppliers">Lieferanten</option>
+            <option value="orders">Nachbestellungen</option>
+            <option value="statistics">Statistiken</option>
+            <option value="activity">Logs</option>
+            <option value="data">Daten</option>
+        </select>
+    </label>
+    <nav class="nav" aria-label="Hauptnavigation">
+        <button class="active" type="button" data-view="dashboard">Dashboard</button>
+        <button type="button" data-view="products">Produkte</button>
+        <button type="button" data-view="suppliers">Lieferanten</button>
+        <button type="button" data-view="orders">Bestellungen</button>
+        <button type="button" data-view="statistics">Statistiken</button>
+        <button type="button" data-view="activity">Logs</button>
+        <button type="button" data-view="data">Daten</button>
+    </nav>
+</aside>
+
+<main class="app-shell">
+    <header class="topbar">
+        <div>
+            <p class="eyebrow">Lokales Supply-Chain-System</p>
+            <h1 id="viewTitle">Operatives Cockpit</h1>
+        </div>
+        <div class="actions">
+            <button id="refreshButton" type="button">Aktualisieren</button>
+            <span id="apiStatus" class="status-pill">Prüfe API</span>
+        </div>
+    </header>
+
+    <section id="view-dashboard" class="view active">
+        <section id="metrics" class="metrics" aria-label="Kennzahlen"></section>
+        <section class="workspace">
+            <div class="main-stack">
+                <section class="panel inventory-panel">
+                    <div class="panel-header">
+                        <div>
+                            <p class="eyebrow">Live Bestand</p>
+                            <h2>Bestandsübersicht</h2>
+                        </div>
+                        <div class="filter-row compact-filters">
+                            <select id="dashboardStatusFilter"></select>
+                            <select id="dashboardSupplierFilter"></select>
+                        </div>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                            <tr>
+                                <th>SKU</th>
+                                <th>Produkt</th>
+                                <th>Bestand</th>
+                                <th>Reichweite</th>
+                                <th>Status</th>
+                                <th>Aktionen</th>
+                            </tr>
+                            </thead>
+                            <tbody id="dashboardRows"></tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+            <aside class="side-stack">
+                <section class="panel">
+                    <div class="panel-header compact">
+                        <h2>Warnungen</h2>
+                    </div>
+                    <div id="alerts" class="alerts"></div>
+                </section>
+                <section class="panel">
+                    <div class="panel-header compact">
+                        <h2>Letzte Bewegungen</h2>
+                    </div>
+                    <div id="movementRows" class="movement-list"></div>
+                </section>
+            </aside>
+        </section>
+    </section>
+
+    <section id="view-products" class="view">
+        <section class="panel">
+            <div class="panel-header">
+                <div>
+                    <p class="eyebrow">Produktstamm</p>
+                    <h2>Produkte verwalten</h2>
+                </div>
+                <button id="resetFormButton" type="button" class="secondary">Neues Produkt</button>
+            </div>
+
+            <form id="productForm" class="form-grid">
+                <input type="hidden" id="productId">
+                <label>SKU<input id="sku" required maxlength="40" placeholder="SKU-6001"></label>
+                <label>Produkt<input id="name" required maxlength="120" placeholder="Produktname"></label>
+                <label>Kategorie<input id="category" required maxlength="80" placeholder="Elektronik"></label>
+                <label>Bestand<input id="stock" required type="number" min="0" step="1"></label>
+                <label>Meldebestand<input id="reorderPoint" required type="number" min="0" step="1"></label>
+                <label>Tagesbedarf<input id="averageDailyDemand" required type="number" min="0" step="1"></label>
+                <label>Stückkosten<input id="unitCost" required type="number" min="0" step="0.01"></label>
+                <label>Lieferant<select id="supplierId"></select></label>
+                <div class="form-actions">
+                    <button type="submit">Speichern</button>
+                    <span id="formMessage" class="form-message"></span>
+                </div>
+            </form>
+        </section>
+
+        <section class="panel inventory-panel">
+            <div class="panel-header">
+                <div>
+                    <p class="eyebrow">Filter & Aktionen</p>
+                    <h2>Produktliste</h2>
+                </div>
+                <div class="filter-row">
+                    <input id="productFilter" class="filter-input" placeholder="Suchen">
+                    <select id="statusFilter"></select>
+                    <select id="categoryFilter"></select>
+                    <select id="supplierFilter"></select>
+                </div>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>SKU</th>
+                        <th>Produkt</th>
+                        <th>Kategorie</th>
+                        <th>Bestand</th>
+                        <th>Reichweite</th>
+                        <th>Nachbestellung</th>
+                        <th>Wert</th>
+                        <th>Status</th>
+                        <th>Aktionen</th>
+                    </tr>
+                    </thead>
+                    <tbody id="inventoryRows"></tbody>
+                </table>
+            </div>
+        </section>
+    </section>
+
+    <section id="view-suppliers" class="view">
+        <section class="panel">
+            <div class="panel-header">
+                <div>
+                    <p class="eyebrow">Lieferantenstamm</p>
+                    <h2>Lieferanten verwalten</h2>
+                </div>
+                <button id="resetSupplierButton" type="button" class="secondary">Neuer Lieferant</button>
+            </div>
+            <form id="supplierForm" class="form-grid">
+                <input type="hidden" id="supplierEditId">
+                <label>Name<input id="supplierName" required maxlength="120" placeholder="Lieferant GmbH"></label>
+                <label>E-Mail<input id="supplierEmail" type="email" maxlength="160" placeholder="orders@example.com"></label>
+                <label>Lieferzeit Tage<input id="supplierLeadTimeDays" required type="number" min="1" step="1"></label>
+                <label class="checkbox-label"><input id="supplierDelayed" type="checkbox"> Verzögert</label>
+                <div class="form-actions">
+                    <button type="submit">Speichern</button>
+                    <span id="supplierMessage" class="form-message"></span>
+                </div>
+            </form>
+        </section>
+        <section class="panel">
+            <div class="panel-header compact">
+                <h2>Lieferantenliste</h2>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>E-Mail</th>
+                        <th>Lieferzeit</th>
+                        <th>Status</th>
+                        <th>Aktionen</th>
+                    </tr>
+                    </thead>
+                    <tbody id="supplierRows"></tbody>
+                </table>
+            </div>
+        </section>
+    </section>
+
+    <section id="view-orders" class="view">
+        <section class="panel">
+            <div class="panel-header">
+                <div>
+                    <p class="eyebrow">Beschaffung</p>
+                    <h2>Nachbestellungen</h2>
+                </div>
+                <select id="orderStatusFilter">
+                    <option value="">Alle Status</option>
+                    <option value="PLANNED">Geplant</option>
+                    <option value="ORDERED">Bestellt</option>
+                    <option value="DELIVERED">Geliefert</option>
+                    <option value="CANCELLED">Storniert</option>
+                </select>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Produkt</th>
+                        <th>Lieferant</th>
+                        <th>Menge</th>
+                        <th>Status</th>
+                        <th>Erwartet</th>
+                        <th>Notiz</th>
+                        <th>Aktionen</th>
+                    </tr>
+                    </thead>
+                    <tbody id="orderRows"></tbody>
+                </table>
+            </div>
+        </section>
+    </section>
+
+    <section id="view-statistics" class="view">
+        <section id="statCards" class="metrics"></section>
+        <section class="stats-grid">
+            <div class="panel">
+                <div class="panel-header compact">
+                    <h2>Statusverteilung</h2>
+                </div>
+                <div id="statusDistribution" class="bar-list"></div>
+            </div>
+            <div class="panel">
+                <div class="panel-header compact">
+                    <h2>Kategorien</h2>
+                </div>
+                <div id="categoryDistribution" class="bar-list"></div>
+            </div>
+            <div class="panel">
+                <div class="panel-header compact">
+                    <h2>Top Risiken</h2>
+                </div>
+                <div id="topRisks" class="risk-list"></div>
+            </div>
+            <div class="panel">
+                <div class="panel-header compact">
+                    <h2>Lieferantenrisiko</h2>
+                </div>
+                <div id="supplierRisk" class="supplier-risk"></div>
+            </div>
+        </section>
+    </section>
+
+    <section id="view-activity" class="view">
+        <section class="panel">
+            <div class="panel-header">
+                <div>
+                    <p class="eyebrow">Audit Trail</p>
+                    <h2>Aktivitätslogs</h2>
+                </div>
+                <select id="activityFilter">
+                    <option value="">Alle Aktionen</option>
+                    <option value="CREATE">Erstellt</option>
+                    <option value="UPDATE">Aktualisiert</option>
+                    <option value="DELETE">Gelöscht</option>
+                    <option value="MOVEMENT">Bewegung</option>
+                    <option value="IMPORT">Import</option>
+                </select>
+            </div>
+            <div id="activityRows" class="activity-list"></div>
+        </section>
+    </section>
+
+    <section id="view-data" class="view">
+        <section class="panel">
+            <div class="panel-header">
+                <div>
+                    <p class="eyebrow">Import & Export</p>
+                    <h2>Daten verwalten</h2>
+                </div>
+            </div>
+            <div class="data-actions">
+                <a class="button-link" href="/api/products/csv">CSV exportieren</a>
+                <label class="file-button">CSV importieren
+                    <input id="csvFile" type="file" accept=".csv,text/csv">
+                </label>
+            </div>
+            <p id="csvMessage" class="panel-note"></p>
+        </section>
+    </section>
+</main>
+
+<dialog id="movementDialog">
+    <form id="movementForm" class="stack-form" method="dialog">
+        <div class="panel-header compact">
+            <h2>Bestand buchen</h2>
+            <button id="closeMovementDialog" type="button" class="icon-button">x</button>
+        </div>
+        <input type="hidden" id="movementProductId">
+        <p id="movementProductLabel" class="panel-note"></p>
+        <label>Typ
+            <select id="movementType" required>
+                <option value="IN">Wareneingang</option>
+                <option value="OUT">Warenausgang</option>
+                <option value="ADJUSTMENT">Korrektur auf Zielbestand</option>
+            </select>
+        </label>
+        <label>Menge<input id="movementQuantity" required type="number" min="1" step="1"></label>
+        <label>Grund<input id="movementReason" required maxlength="120" placeholder="Inventur, Auftrag, Lieferung"></label>
+        <button type="submit">Buchen</button>
+    </form>
+</dialog>
+
+<script src="/app.js"></script>
+</body>
+</html>
